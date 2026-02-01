@@ -1,43 +1,47 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { TimerPage, RoutinesPage, HistoryPage, MetricsPage, SettingsPage } from './pages';
-import { BottomNav, OfflineIndicator } from './components/layout';
-import { seedDatabase } from './db/seed';
-import { useSettingsStore } from './store/settingsStore';
+import { useState } from 'react';
+import { SetupScreen } from './screens/SetupScreen';
+import { TimerScreen } from './screens/TimerScreen';
+
+export type Screen = 'setup' | 'timer';
+
+export interface TimerSettings {
+  activeTime: number;
+  restTime: number;
+  soundEnabled: boolean;
+}
 
 function App() {
-  const theme = useSettingsStore((s) => s.theme);
+  const [screen, setScreen] = useState<Screen>('setup');
+  const [settings, setSettings] = useState<TimerSettings>({
+    activeTime: 30,
+    restTime: 15,
+    soundEnabled: true,
+  });
 
-  // Initialize database
-  useEffect(() => {
-    seedDatabase();
-  }, []);
+  const handleStart = () => {
+    setScreen('timer');
+  };
 
-  // Apply theme
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.toggle('dark', prefersDark);
-    } else {
-      root.classList.toggle('dark', theme === 'dark');
-    }
-  }, [theme]);
+  const handleExit = () => {
+    setScreen('setup');
+  };
 
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-        <OfflineIndicator />
-        <Routes>
-          <Route path="/" element={<TimerPage />} />
-          <Route path="/routines" element={<RoutinesPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/metrics" element={<MetricsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
-        <BottomNav />
-      </div>
-    </BrowserRouter>
+    <div className="app">
+      {screen === 'setup' && (
+        <SetupScreen
+          settings={settings}
+          onSettingsChange={setSettings}
+          onStart={handleStart}
+        />
+      )}
+      {screen === 'timer' && (
+        <TimerScreen
+          settings={settings}
+          onExit={handleExit}
+        />
+      )}
+    </div>
   );
 }
 
